@@ -1,0 +1,23 @@
+cameras:
+  cam_001:
+    location_type: office
+    zones:
+      - name: entrance
+        zone_risk_weight: 20
+      - name: server_room
+        zone_risk_weight: 90
+  cam_002:
+    location_type: warehouse
+    zones:
+      - name: loading_dock
+        zone_risk_weight: 60
+  cam_003:
+    location_type: hospital
+    zones:
+      - name: icu
+        zone_risk_weight: 100
+  cam_004:
+    location_type: station
+    zones:
+      - name: platform_1
+        zone_risk_weight: 40
