@@ -13,8 +13,11 @@ import re
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from typing import Optional
-import config
-from reasoning.prompts import SYSTEM_INSTRUCTION, JSON_SCHEMA_INSTRUCTION
+import ai.config as config
+from backend.services.ai_service.reasoning.prompts import (
+    JSON_SCHEMA_INSTRUCTION,
+    SYSTEM_INSTRUCTION,
+)
 
 
 class GemmaReasoningEngine:

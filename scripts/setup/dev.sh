@@ -16,15 +16,22 @@ if [ ! -f ".env" ]; then
   echo "Created .env from .env.example"
 fi
 
-docker compose up -d postgres
+docker compose up -d postgres redis
 
 echo "Waiting for PostgreSQL..."
 until docker compose exec postgres pg_isready -U postgres -d public_safety >/dev/null 2>&1; do
   sleep 1
 done
 
+echo "Waiting for Redis..."
+until docker compose exec redis redis-cli ping | grep -q PONG; do
+  sleep 1
+done
+
 PYTHONPATH="$ROOT_DIR" python scripts/setup/init_db.py
 
-echo "Backend ready. Run:"
+echo "Backend ready. Run (in separate terminals):"
 echo "  source .venv/bin/activate"
-echo "  PYTHONPATH=$ROOT_DIR uvicorn backend.main:app --reload"
+echo "  PYTHONPATH=$ROOT_DIR uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000"
+echo "  ./scripts/setup/run_worker.sh"
+echo "  cd frontend && npm install && npm run dev"

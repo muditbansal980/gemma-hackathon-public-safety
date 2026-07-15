@@ -18,7 +18,7 @@ clearly marked as such rather than guessing.
 import cv2
 from ultralytics import YOLO
 from typing import Optional
-import config
+import ai.config as config
 from ai.perspection.tracker_utils import SpatialTimelineLogger
 from ai.perspection.behaviour_analyzer import BehaviorAnalyzer
 

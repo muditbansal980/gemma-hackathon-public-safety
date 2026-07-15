@@ -14,7 +14,7 @@ alert.
 import json
 from collections import defaultdict
 
-import config
+import ai.config as config
 
 
 def _level_for_score(score):
