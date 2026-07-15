@@ -3,19 +3,19 @@ import logging
 from typing import Any
 
 from ai.perspection.detector import process_video_feed
-from backend.services.ai_service.gemma_service import GemmaReasoningEngine
+from backend.services.ai_service.gemini_service import GeminiReasoningEngine
 from backend.services.ai_service.reasoning.symbolic_rules import score_timeline
 
 logger = logging.getLogger(__name__)
 
-_gemma_engine: GemmaReasoningEngine | None = None
+_gemini_engine: GeminiReasoningEngine | None = None
 
 
-def _get_gemma_engine() -> GemmaReasoningEngine:
-    global _gemma_engine
-    if _gemma_engine is None:
-        _gemma_engine = GemmaReasoningEngine()
-    return _gemma_engine
+def _get_gemini_engine() -> GeminiReasoningEngine:
+    global _gemini_engine
+    if _gemini_engine is None:
+        _gemini_engine = GeminiReasoningEngine()
+    return _gemini_engine
 
 
 def _map_severity(level: str) -> str:
@@ -29,7 +29,7 @@ def _map_severity(level: str) -> str:
 
 
 def run_pipeline(video_path: str) -> dict[str, Any]:
-    """Run YOLO perception → symbolic scoring → optional Gemma narrative."""
+    """Run YOLO perception → symbolic scoring → optional Gemini narrative."""
     timeline_json = process_video_feed(video_path)
 
     if not timeline_json or timeline_json in ("[]", ""):
@@ -47,14 +47,11 @@ def run_pipeline(video_path: str) -> dict[str, Any]:
     forensic_report = None
     if overall != "LOW" or severity_report.get("flags"):
         try:
-            engine = _get_gemma_engine()
+            engine = _get_gemini_engine()
             forensic_report = engine.analyze_timeline(timeline_json, severity_report)
         except Exception as exc:
-            logger.warning("Gemma reasoning failed: %s", exc)
-            forensic_report = (
-                "Automated LLM narrative unavailable. "
-                f"Rule-based severity: {json.dumps(severity_report, indent=2)}"
-            )
+            logger.warning("Gemini reasoning failed: %s", exc)
+            forensic_report = GeminiReasoningEngine.fallback_report(severity_report)
 
     return {
         "timeline": json.loads(timeline_json),

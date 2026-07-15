@@ -16,6 +16,7 @@ from backend.core.database import engine, get_db
 from backend.models import Base
 from backend.websocket.alert_ws import alert_ws_manager
 from backend.websocket.event_ws import event_ws_manager
+from backend.websocket.preview_ws import preview_ws_manager
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     Base.metadata.create_all(bind=engine)
+    preview_ws_manager.set_event_loop(asyncio.get_running_loop())
     redis_task = asyncio.create_task(alert_ws_manager.listen_redis())
     events_task = asyncio.create_task(event_ws_manager.listen_redis())
     logger.info("Application started")
@@ -84,6 +86,16 @@ async def events_websocket(websocket: WebSocket):
             await websocket.receive_text()
     except WebSocketDisconnect:
         event_ws_manager.disconnect(websocket)
+
+
+@app.websocket("/ws/preview/{camera_id}")
+async def preview_websocket(websocket: WebSocket, camera_id: str):
+    await preview_ws_manager.connect(camera_id, websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        preview_ws_manager.disconnect(camera_id, websocket)
 
 
 if __name__ == "__main__":

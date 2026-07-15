@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { api, type Alert } from "@/lib/api";
 import { useAlertStore } from "@/store/useAlertStore";
 
@@ -13,6 +14,7 @@ export function AlertPanel() {
   const alerts = useAlertStore((s) => s.alerts);
   const liveConnected = useAlertStore((s) => s.liveConnected);
   const updateAlert = useAlertStore((s) => s.updateAlert);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   async function setStatus(alert: Alert, status: Alert["status"]) {
     const updated = await api.updateAlertStatus(alert.id, status);
@@ -36,36 +38,51 @@ export function AlertPanel() {
         {alerts.length === 0 && (
           <li className="text-sm text-gray-400">No alerts yet. Start recording to process video.</li>
         )}
-        {alerts.map((alert) => (
-          <li
-            key={alert.id}
-            className="rounded-lg border border-safety-border p-4"
-          >
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <p className="font-medium">{alert.title}</p>
-              <span className={`text-xs uppercase ${riskColors[alert.risk_level]}`}>
-                {alert.risk_level}
-              </span>
-            </div>
-            <p className="mb-2 line-clamp-3 text-xs text-gray-400">
-              {alert.description ?? "No description"}
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setStatus(alert, "confirmed")}
-                className="rounded bg-safety-ok/20 px-2 py-1 text-xs text-safety-ok"
+        {alerts.map((alert) => {
+          const expanded = expandedId === alert.id;
+          return (
+            <li
+              key={alert.id}
+              className="rounded-lg border border-safety-border p-4"
+            >
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <p className="font-medium">{alert.title}</p>
+                <span className={`text-xs uppercase ${riskColors[alert.risk_level]}`}>
+                  {alert.risk_level}
+                </span>
+              </div>
+              <p
+                className={`mb-2 text-xs text-gray-400 ${
+                  expanded ? "whitespace-pre-wrap" : "line-clamp-3"
+                }`}
               >
-                Confirm
-              </button>
-              <button
-                onClick={() => setStatus(alert, "dismissed")}
-                className="rounded bg-gray-700 px-2 py-1 text-xs"
-              >
-                Dismiss
-              </button>
-            </div>
-          </li>
-        ))}
+                {alert.description ?? "No description"}
+              </p>
+              {alert.description && alert.description.length > 120 && (
+                <button
+                  onClick={() => setExpandedId(expanded ? null : alert.id)}
+                  className="mb-2 text-xs text-safety-accent hover:underline"
+                >
+                  {expanded ? "Show less" : "View full Gemini analysis"}
+                </button>
+              )}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setStatus(alert, "confirmed")}
+                  className="rounded bg-safety-ok/20 px-2 py-1 text-xs text-safety-ok"
+                >
+                  Confirm
+                </button>
+                <button
+                  onClick={() => setStatus(alert, "dismissed")}
+                  className="rounded bg-gray-700 px-2 py-1 text-xs"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

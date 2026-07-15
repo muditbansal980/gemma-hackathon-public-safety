@@ -9,4 +9,4 @@ if [[ -f .venv/bin/activate ]]; then
 fi
 
 export PYTHONPATH="$ROOT"
-python -m backend.workers.video_worker
+python -m worker

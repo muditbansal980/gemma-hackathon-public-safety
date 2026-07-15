@@ -8,6 +8,7 @@ from pathlib import Path
 import cv2
 
 from backend.core.config import settings
+from backend.services.camera_service.live_preview_service import live_preview_service
 from backend.services.redis_service.redis_service import enqueue_video_job
 
 logger = logging.getLogger(__name__)
@@ -88,6 +89,7 @@ class CameraRecorderService:
         chunk_index = 0
         camera_dir = settings.recordings_dir / camera_id
         camera_dir.mkdir(parents=True, exist_ok=True)
+        preview_counter = 0
 
         try:
             while not stop_event.is_set():
@@ -108,6 +110,10 @@ class CameraRecorderService:
                         break
                     writer.write(frame)
                     frames_written += 1
+
+                    preview_counter += 1
+                    if preview_counter % settings.preview_frame_skip == 0:
+                        live_preview_service.process_frame(camera_id, frame.copy())
 
                 writer.release()
 

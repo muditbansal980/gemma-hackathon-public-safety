@@ -28,6 +28,10 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = ["http://localhost:3000"]
 
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.0-flash"
+    preview_frame_skip: int = 3
+
 
 settings = Settings()
 settings.recordings_dir.mkdir(parents=True, exist_ok=True)

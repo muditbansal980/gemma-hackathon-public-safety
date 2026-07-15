@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { LivePreview } from "@/components/LivePreview";
 import { useAlertStore } from "@/store/useAlertStore";
 
 export function CameraPanel() {
@@ -12,6 +13,10 @@ export function CameraPanel() {
   const [newName, setNewName] = useState("Laptop Webcam");
   const [newLocation, setNewLocation] = useState("Dev Lab");
   const [source, setSource] = useState("webcam");
+  const [error, setError] = useState<string | null>(null);
+
+  const activeRecordingId =
+    Object.entries(recording).find(([, isOn]) => isOn)?.[0] ?? null;
 
   const syncRecordingState = useCallback(async () => {
     try {
@@ -24,9 +29,14 @@ export function CameraPanel() {
   }, []);
 
   async function refreshCameras() {
-    const list = await api.listCameras();
-    setCameras(list);
-    await syncRecordingState();
+    try {
+      setError(null);
+      const list = await api.listCameras();
+      setCameras(list);
+      await syncRecordingState();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load cameras");
+    }
   }
 
   useEffect(() => {
@@ -38,18 +48,24 @@ export function CameraPanel() {
   }, [syncRecordingState]);
 
   async function createCamera() {
-    await api.createCamera({
-      name: newName,
-      location: newLocation,
-      zone: "Restricted_Zone_Alpha",
-      rtsp_url: source === "webcam" ? "webcam" : source,
-    });
-    await refreshCameras();
+    try {
+      setError(null);
+      await api.createCamera({
+        name: newName,
+        location: newLocation,
+        zone: "Restricted_Zone_Alpha",
+        rtsp_url: source === "webcam" ? "webcam" : source,
+      });
+      await refreshCameras();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to register camera");
+    }
   }
 
   async function toggleRecording(cameraId: string, cameraSource: string | null) {
     setBusyId(cameraId);
     try {
+      setError(null);
       if (recording[cameraId]) {
         await api.stopRecording(cameraId);
         setRecording((r) => ({ ...r, [cameraId]: false }));
@@ -59,6 +75,8 @@ export function CameraPanel() {
         await api.startRecording(cameraId, resolvedSource);
         setRecording((r) => ({ ...r, [cameraId]: true }));
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Recording request failed");
     } finally {
       setBusyId(null);
     }
@@ -75,6 +93,12 @@ export function CameraPanel() {
           Refresh
         </button>
       </div>
+
+      {error && (
+        <div className="mb-4 rounded-lg border border-safety-danger/40 bg-safety-danger/10 px-3 py-2 text-xs text-safety-danger">
+          {error}
+        </div>
+      )}
 
       <div className="mb-4 grid gap-2 rounded-lg border border-safety-border p-3 text-sm">
         <input
@@ -135,6 +159,8 @@ export function CameraPanel() {
           </li>
         ))}
       </ul>
+
+      {activeRecordingId && <LivePreview cameraId={activeRecordingId} />}
     </section>
   );
 }

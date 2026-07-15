@@ -31,11 +31,34 @@ export type EventItem = {
   metadata: Record<string, unknown>;
 };
 
+export type Detection = {
+  track_id: number | null;
+  label: string;
+  confidence: number;
+  bbox: [number, number, number, number];
+  is_threat: boolean;
+};
+
+export type PreviewFrame = {
+  type: "frame";
+  camera_id: string;
+  image: string;
+  detections: Detection[];
+  timestamp: string;
+};
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      headers: { "Content-Type": "application/json", ...init?.headers },
+    });
+  } catch {
+    throw new Error(
+      `Backend unreachable at ${API_BASE}. Start FastAPI on port 8000.`
+    );
+  }
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || res.statusText);
@@ -44,6 +67,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  healthCheck: () =>
+    request<{ status: string; database: string }>("/health"),
   listCameras: () => request<Camera[]>("/api/v1/cameras/"),
   createCamera: (body: {
     name: string;
@@ -82,4 +107,8 @@ export function alertsWebSocketUrl(): string {
 
 export function eventsWebSocketUrl(): string {
   return `${WS_BASE}/ws/events`;
+}
+
+export function previewWebSocketUrl(cameraId: string): string {
+  return `${WS_BASE}/ws/preview/${cameraId}`;
 }
