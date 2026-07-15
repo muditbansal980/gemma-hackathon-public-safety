@@ -14,12 +14,20 @@ async def lifespan(_: FastAPI):
     Base.metadata.create_all(bind=engine)
     yield
 
+from backend.api.routes.camera import (
+    router as camera_router
+)
+
 
 app = FastAPI(
     title="Public Safety API",
     description="Local-first public safety monitoring backend",
     version="0.1.0",
     lifespan=lifespan,
+)
+app.include_router(
+    camera_router,
+    prefix="/api/v1"
 )
 
 
