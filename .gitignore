@@ -10,6 +10,7 @@ build/
 .mypy_cache/
 .ruff_cache/
 *.log
+node_modules/
 data/recordings/*
 data/snapshots/*
 data/embeddings/*

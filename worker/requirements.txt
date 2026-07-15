@@ -1,0 +1,2 @@
+# Worker process: YOLO + symbolic rules + Gemini API
+-r ../backend/requirements.txt
